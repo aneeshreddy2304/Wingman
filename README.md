@@ -1,39 +1,67 @@
-<p align="center"><img src="docs/assets/banner.svg" alt="Wingman — Connect stranded drivers with nearby help." width="100%"></p>
+# Wingman / RoadAssist
 
-<p align="center"><img src="docs/assets/badges/react.svg" alt="react" height="28"> <img src="docs/assets/badges/fastapi.svg" alt="fastapi" height="28"> <img src="docs/assets/badges/postgresql.svg" alt="postgresql" height="28"> <img src="docs/assets/badges/postgis.svg" alt="postgis" height="28"> <img src="docs/assets/badges/sqlalchemy.svg" alt="sqlalchemy" height="28"> <img src="docs/assets/badges/docker.svg" alt="docker" height="28"></p>
-
-<p align="center"><strong>A full-stack roadside-assistance marketplace for service requests, nearby mechanics, inventory, messaging, and job coordination.</strong></p>
+**Full-stack roadside assistance and parts marketplace**
 
 ## Overview
 
-A full-stack roadside-assistance marketplace for service requests, nearby mechanics, inventory, messaging, and job coordination.
+Wingman, implemented as RoadAssist, connects stranded drivers with nearby mechanics and a parts marketplace. Its full-stack architecture combines a React client, a FastAPI backend, and a PostgreSQL/PostGIS database to support location-aware discovery, service requests, messaging, and inventory workflows.
 
-### Why it matters
+### Why this project matters
 
-Wingman brings the fragmented roadside-help journey into one location-aware workspace for drivers, mechanics, and parts providers.
+Roadside assistance is a coordination problem involving the driver, mechanic, and parts provider. The project brings those interactions into one application with role-specific capabilities and location-aware searching.
 
-## Key features
+## Key capabilities
 
-- Role-based driver and mechanic workflows
-- PostGIS-powered nearby service discovery
-- Service-request lifecycle and messaging
-- Parts marketplace and warehouse inventory
+- Supports driver, mechanic, and administrative workflows with role-based access.
+- Uses PostGIS for nearby mechanic and service discovery.
+- Manages roadside service requests and their status changes.
+- Includes messaging and service coordination capabilities.
+- Supports parts listings, inventory, and marketplace workflows.
+- Maintains relational data and geospatial queries in PostgreSQL/PostGIS.
+- Provides separate frontend and backend environments for local development.
 
-## Architecture
+## System architecture
 
-```mermaid
-flowchart LR
-  A[React web app] --> B[FastAPI]
-  B --> C[(PostgreSQL + PostGIS)]
-  B --> D[Auth + role workflows]
-  B --> E[Requests + messages]
-  B --> F[Parts marketplace]
-```
+![Wingman / RoadAssist architecture — system components and principal workflows](docs/architecture-overview.svg)
+
+The diagram organizes the major flows into aligned lanes to make their responsibilities and handoffs clear. It is a high-level view; individual modules may also communicate across lanes.
+
+### How it works
+
+The React application presents role-specific screens and communicates with FastAPI. Backend routes enforce authentication and workflow rules and read or write structured records in PostgreSQL. PostGIS supports geographic lookups, while inventory and request-related tables support service coordination.
+
+Local development can run each application component separately or through Docker Compose. The `database/` scripts provide the schema and sample records for a disposable environment.
 
 ## Technology stack
 
-**react** · **fastapi** · **postgresql** · **postgis** · **sqlalchemy** · **docker**
+| Technology | Purpose |
+| --- | --- |
+| **React / Vite** | Web application and client navigation |
+| **FastAPI / Python** | Backend services and REST endpoints |
+| **SQLAlchemy** | Database access and models |
+| **PostgreSQL / PostGIS** | Transactional and geospatial data |
+| **Docker Compose** | Local multi-service development |
+
+## Repository structure
+
+```text
+frontend/            React and Vite web interface
+backend/app/         Active FastAPI application
+backend/.env.example Backend configuration template
+frontend/.env.example Frontend configuration template
+database/schema.sql  Relational and PostGIS schema
+database/seed.sql    Sample development data
+docker-compose.yml   Local application services
+```
 
 ## Getting started
 
-Configure `backend/.env` and `frontend/.env.local` from the examples, initialize a disposable PostgreSQL/PostGIS database, start FastAPI, then run the Vite frontend. Use synthetic records for demos.
+```bash
+docker compose up --build
+# Alternatively, start the backend and frontend separately
+# using their requirements and package scripts.
+```
+
+## Notes and prerequisites
+
+Use disposable development credentials and synthetic records. The active backend implementation is in `backend/app/`; an older copy is also present in the repository. Deployment instructions live in `DEPLOYMENT.md`.
