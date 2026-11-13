@@ -22,9 +22,60 @@ Roadside assistance is a coordination problem involving the driver, mechanic, an
 
 ## System architecture
 
-![Wingman / RoadAssist architecture — system components and principal workflows](docs/architecture-overview.svg)
+```mermaid
+flowchart TB
+    subgraph Clients["Role-based clients"]
+        Owner["Vehicle owner"]
+        Mechanic["Mechanic"]
+        Warehouse["Warehouse"]
+        Admin["Administrator"]
+        React["React / Vite application<br/>protected role routes and workspaces"]
+        Owner --> React
+        Mechanic --> React
+        Warehouse --> React
+        Admin --> React
+    end
 
-The diagram organizes the major flows into aligned lanes to make their responsibilities and handoffs clear. It is a high-level view; individual modules may also communicate across lanes.
+    BrowserGeo["Browser geolocation"] --> React
+    React -->|"Axios • JSON • bearer token"| API
+
+    subgraph Backend["FastAPI backend"]
+        API["FastAPI application and CORS boundary"]
+        Auth["Auth and role authorization"]
+        Discovery["Mechanic discovery<br/>parts search • owner marketplace"]
+        Jobs["Service requests<br/>job lifecycle • messaging • reviews"]
+        Operations["Warehouse, vehicle-care, workspace, and admin routers"]
+        Reminder["Vehicle-care reminder loop"]
+        Mail["SMTP notification helper"]
+        API --> Auth
+        API --> Discovery
+        API --> Jobs
+        API --> Operations
+        API --> Reminder
+        Operations --> Mail
+        Auth --> Mail
+    end
+
+    subgraph Persistence["PostgreSQL + PostGIS"]
+        SQLAlchemy["SQLAlchemy async sessions"]
+        Core[("Users • vehicles • mechanics • service requests")]
+        Commerce[("Parts • warehouses • marketplace inventory")]
+        Engagement[("Messages • reviews • reminders")]
+        Spatial["Geography points<br/>ST_DWithin • ST_Distance"]
+        SQLAlchemy --> Core
+        SQLAlchemy --> Commerce
+        SQLAlchemy --> Engagement
+        SQLAlchemy --> Spatial
+    end
+
+    Auth --> SQLAlchemy
+    Discovery --> SQLAlchemy
+    Jobs --> SQLAlchemy
+    Operations --> SQLAlchemy
+    Reminder --> SQLAlchemy
+    Mail --> SMTP["Configured SMTP server"]
+```
+
 
 ### How it works
 
