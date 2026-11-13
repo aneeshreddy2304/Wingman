@@ -1,81 +1,118 @@
-# RoadAssist
+# Wingman / RoadAssist
 
-RoadAssist connects stranded vehicle owners with nearby mechanics, lets users search spare-part inventory, and tracks the full roadside assistance workflow.
+**Full-stack roadside assistance and parts marketplace**
 
-## Repository Layout
+## Overview
 
-- `backend/`: FastAPI backend
-- `frontend/`: React + Vite frontend
-- `database/schema.sql`: primary PostgreSQL/PostGIS schema
-- `database/seed.sql`: realistic demo seed data
+Wingman, implemented as RoadAssist, connects stranded drivers with nearby mechanics and a parts marketplace. Its full-stack architecture combines a React client, a FastAPI backend, and a PostgreSQL/PostGIS database to support location-aware discovery, service requests, messaging, and inventory workflows.
 
-## Best Deployment Split
+### Why this project matters
 
-- Frontend: Vercel
-- Backend: Render or Railway
-- Database: PostgreSQL with PostGIS enabled
+Roadside assistance is a coordination problem involving the driver, mechanic, and parts provider. The project brings those interactions into one application with role-specific capabilities and location-aware searching.
 
-Do not try to host the full FastAPI + PostGIS stack on Vercel.
+## Key capabilities
 
-## Local Setup
+- Supports driver, mechanic, and administrative workflows with role-based access.
+- Uses PostGIS for nearby mechanic and service discovery.
+- Manages roadside service requests and their status changes.
+- Includes messaging and service coordination capabilities.
+- Supports parts listings, inventory, and marketplace workflows.
+- Maintains relational data and geospatial queries in PostgreSQL/PostGIS.
+- Provides separate frontend and backend environments for local development.
 
-### Backend
+## System architecture
+
+```mermaid
+flowchart TB
+    subgraph Clients["Role-based clients"]
+        Owner["Vehicle owner"]
+        Mechanic["Mechanic"]
+        Warehouse["Warehouse"]
+        Admin["Administrator"]
+        React["React / Vite application<br/>protected role routes and workspaces"]
+        Owner --> React
+        Mechanic --> React
+        Warehouse --> React
+        Admin --> React
+    end
+
+    BrowserGeo["Browser geolocation"] --> React
+    React -->|"Axios • JSON • bearer token"| API
+
+    subgraph Backend["FastAPI backend"]
+        API["FastAPI application and CORS boundary"]
+        Auth["Auth and role authorization"]
+        Discovery["Mechanic discovery<br/>parts search • owner marketplace"]
+        Jobs["Service requests<br/>job lifecycle • messaging • reviews"]
+        Operations["Warehouse, vehicle-care, workspace, and admin routers"]
+        Reminder["Vehicle-care reminder loop"]
+        Mail["SMTP notification helper"]
+        API --> Auth
+        API --> Discovery
+        API --> Jobs
+        API --> Operations
+        API --> Reminder
+        Operations --> Mail
+        Auth --> Mail
+    end
+
+    subgraph Persistence["PostgreSQL + PostGIS"]
+        SQLAlchemy["SQLAlchemy async sessions"]
+        Core[("Users • vehicles • mechanics • service requests")]
+        Commerce[("Parts • warehouses • marketplace inventory")]
+        Engagement[("Messages • reviews • reminders")]
+        Spatial["Geography points<br/>ST_DWithin • ST_Distance"]
+        SQLAlchemy --> Core
+        SQLAlchemy --> Commerce
+        SQLAlchemy --> Engagement
+        SQLAlchemy --> Spatial
+    end
+
+    Auth --> SQLAlchemy
+    Discovery --> SQLAlchemy
+    Jobs --> SQLAlchemy
+    Operations --> SQLAlchemy
+    Reminder --> SQLAlchemy
+    Mail --> SMTP["Configured SMTP server"]
+```
+
+
+### How it works
+
+The React application presents role-specific screens and communicates with FastAPI. Backend routes enforce authentication and workflow rules and read or write structured records in PostgreSQL. PostGIS supports geographic lookups, while inventory and request-related tables support service coordination.
+
+Local development can run each application component separately or through Docker Compose. The `database/` scripts provide the schema and sample records for a disposable environment.
+
+## Technology stack
+
+| Technology | Purpose |
+| --- | --- |
+| **React / Vite** | Web application and client navigation |
+| **FastAPI / Python** | Backend services and REST endpoints |
+| **SQLAlchemy** | Database access and models |
+| **PostgreSQL / PostGIS** | Transactional and geospatial data |
+| **Docker Compose** | Local multi-service development |
+
+## Repository structure
+
+```text
+frontend/            React and Vite web interface
+backend/app/         Active FastAPI application
+backend/.env.example Backend configuration template
+frontend/.env.example Frontend configuration template
+database/schema.sql  Relational and PostGIS schema
+database/seed.sql    Sample development data
+docker-compose.yml   Local application services
+```
+
+## Getting started
 
 ```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+docker compose up --build
+# Alternatively, start the backend and frontend separately
+# using their requirements and package scripts.
 ```
 
-Create `backend/.env` from `backend/.env.example`.
+## Notes and prerequisites
 
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Create `frontend/.env.local` from `frontend/.env.example`.
-
-## Database Setup
-
-Run `database/schema.sql` first, then `database/seed.sql`.
-
-This SQL includes:
-
-- PostGIS geospatial search
-- low-stock triggers
-- mechanic rating trigger updates
-- `sp_accept_job` stored procedure
-- `mv_mechanic_dashboard` materialized view
-- admin analytics view
-- RLS policies for core tables
-
-## Production Environment Variables
-
-### Backend
-
-```env
-DATABASE_URL=postgresql+asyncpg://...
-SECRET_KEY=replace-me
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=1440
-APP_ENV=production
-ALLOWED_ORIGINS=https://your-frontend-domain.vercel.app
-```
-
-### Frontend
-
-```env
-VITE_API_URL=https://your-backend-domain.onrender.com
-```
-
-## Notes
-
-- The backend already expects the richer SQL schema in `database/schema.sql`.
-- Mechanic dashboard pages now use a direct `/mechanics/me` lookup instead of a fragile nearby-search workaround.
-- There is a duplicate older copy under `backend/roadassist/`; the active app is `backend/app/`.
+Use disposable development credentials and synthetic records. The active backend implementation is in `backend/app/`; an older copy is also present in the repository. Deployment instructions live in `DEPLOYMENT.md`.
