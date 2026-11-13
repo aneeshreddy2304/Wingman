@@ -1,4 +1,6 @@
-# Deployment Recommendations
+# Wingman deployment notes
+
+RoadAssist is the earlier project name retained in backend identifiers. Use an isolated database: startup still performs some schema changes even with `AUTO_BOOTSTRAP_SCHEMA=false`.
 
 ## Recommended Production Split
 
@@ -35,7 +37,7 @@ Then open:
 
 ## Backend on Render
 
-Use [backend/render.yaml](/Users/AneeshPC/Downloads/RoadAssist/backend/render.yaml).
+Use [backend/render.yaml](backend/render.yaml).
 
 Set these environment variables:
 
@@ -53,10 +55,10 @@ Set:
 
 - `VITE_API_URL=https://your-backend-url`
 
-The existing [frontend/vercel.json](/Users/AneeshPC/Downloads/RoadAssist/frontend/vercel.json) already handles SPA routing.
+The existing [frontend/vercel.json](frontend/vercel.json) already handles SPA routing.
 
 ## Known Practical Risks
 
 - Mechanic map markers are still approximate in the current frontend because the nearby API does not return raw coordinates yet.
-- The active backend is `backend/app/`. There is an older duplicate under `backend/roadassist/` that should not be deployed.
+- The active backend is `backend/app/`. No `backend/roadassist/` directory is present in the current tree.
 - Free-tier backend cold starts can make demos feel flaky. Railway is usually smoother than Render free tier for course demos.
